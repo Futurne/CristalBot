@@ -15,6 +15,7 @@ from discord.ext.commands import Cog, Bot, Context, command
 from discord import Member
 
 import pandas as pd
+import numpy as np
 
 from src.create_sentence import CreateSentence
 
@@ -86,6 +87,9 @@ class AzuriaBot(Cog):
 
         Réponds à chaque fois que c'est AzuriaCristal.
         """
+        if context.content.startswith('!'):
+            return  # Ne fait rien
+
         if context.author.name == 'AzuriaCristal':
             await context.channel.send(self.create_sentence.sentence())
             return
