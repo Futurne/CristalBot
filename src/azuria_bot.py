@@ -1,4 +1,13 @@
+"""
+Bot discord.
+Permet de générer des phrases à partir des phrases d'un utilisateur discord.
+Utilise CreateSentence pour la génération de phrase.
+
+Il est aussi possible d'utiliser ce bot pour sauvegarder
+les phrases dans un fichier csv.
+"""
 import os
+import time
 import typing
 
 import discord
@@ -7,7 +16,7 @@ from discord import Member
 
 import pandas as pd
 
-from create_sentence import CreateSentence
+from src.create_sentence import CreateSentence
 
 
 class AzuriaBot(Cog):
@@ -25,6 +34,11 @@ class AzuriaBot(Cog):
         self.df = pd.read_csv(os.getenv('DATABASE'))
         content = self.df[ self.df['author'] == author ]['content']
         self.create_sentence = CreateSentence(content.dropna(), n)
+
+        # Réponse automatique - paramètres
+        self.last_send = time.time()
+        self.scale = 30  # 30 min d'attente en moyenne
+        self.next_send = np.random.exponential(self.scale)
 
     @Cog.listener()
     async def on_ready(self):
@@ -65,8 +79,23 @@ class AzuriaBot(Cog):
 
     @Cog.listener()
     async def on_message(self, context: Context):
+        """
+        Réponds de temps en temps aux messages.
+        Pour savoir si on a le droit de répondre, on utilise
+        une variable aléatoire 'next_send', qui suit une loi exponentielle.
+
+        Réponds à chaque fois que c'est AzuriaCristal.
+        """
         if context.author.name == 'AzuriaCristal':
             await context.channel.send(self.create_sentence.sentence())
+            return
+
+        delta_time = time.time() - self.last_send
+        if delta_time > self.next_send * 60:
+            await context.channel.send(self.create_sentence.sentence())
+            self.next_send = np.random.exponential(self.scale)
+            self.last_send = time.time()
+
 
     @command(name='regalemoi')
     async def azuregale(self, context: Context):
