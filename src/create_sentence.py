@@ -29,7 +29,7 @@ class WordLink:
         self.end_count += 1
         self.sum_possibilities += 1
 
-    def __str__(self):
+    def __repr__(self):
         return "{}:\n{} starts\n{} ends\n{} next_possibilities".format(
                 self.word, self.start_count, self.end_count, self.sum_possibilities)
 
@@ -67,6 +67,31 @@ class CreateSentence:
                 p = words[j:len(words)]
                 p = ' '.join(p)
                 self.add_end(p)
+
+        # Remove the high prob with punctuations
+        punc = set('?!.')
+        for p in punc:
+            for i in range(1, self.n + 1):
+                word = ' '.join([p for _ in range(i)])
+                word_link = self.link_words[word]
+
+                p_score = word_link.link[p]
+                others = word_link.sum_possibilities - p_score
+                word_link.link[p] = others / 4
+
+        # Make starting words more probable if they
+        # have a better chance to lead to a longer sentence
+        for word_link in self.link_words.values():
+            if word_link.end_count / word_link.sum_possibilities > 0.5:
+                # Lower chance of ending sentence
+                others = word_link.sum_possibilities - word_link.end_count
+                word_link.end_count = others / 2
+                word_link.sum_possibilities = others + word_link.end_count
+
+                # Lower chance of starting with that word
+                remove_count = word_link.start_count / 2
+                word_link.start_count -= remove_count
+                self.sum_starts -= remove_count
 
     def add_link(self, previous_word, next_word):
         self.add_word(previous_word)
@@ -115,15 +140,74 @@ class CreateSentence:
         while next_word != '[END]' and len(sentence) < max_words:
             sentence.append(next_word)
 
-            j = max(len(sentence) - self.n, 0)
-            p = sentence[j:len(sentence)]
-            p = ' '.join(p)
-            next_word = self.choose_next(p)
-            while next_word is None and j < len(sentence):
+            start_idx = max(len(sentence) - self.n, 0)
+            next_words = []
+            for j in range(start_idx, len(sentence)):
                 p = sentence[j:len(sentence)]
                 p = ' '.join(p)
-                next_word = self.choose_next(p)
+                next_words.append(self.choose_next(p))
 
-                j += 1
+            next_word = '[END]'
+            for w in next_words:
+                if w is not None and w != '[END]':
+                    next_word = w
 
-        return ' '.join(sentence)
+        sentence = ' '.join(sentence)
+        return CreateSentence.process_sentence(sentence)
+
+    def process_sentence(sentence):
+        """
+        Do some transformations to make the sentence
+        more readable.
+
+        word1 ' word2 => word1'word2
+        word1 , word2 => word1, word2
+        word1 . => word1.
+        """
+        sentence = sentence.replace(' ,', ',')
+        sentence = sentence.replace(" ' ", "'")
+
+        punc = set('?!.')
+        for p in punc:
+            sentence = sentence.replace(f' {p}', p)
+
+        return sentence
+
+    def preprocess_content(content):
+        """
+        Preprocess phrases.
+
+        List of tasks:
+         - lowerise
+         - punctuation
+         - remove youtube links
+        """
+        punc = set(',.\'"!?')
+        to_remove = set('"«»«»')
+        preprocessed = []
+        for cont in content:
+            if cont.startswith(';;') or cont.startswith('!'):
+                continue  # Pass
+
+            if cont.startswith('http'):
+                if 'youtu.be' in cont:
+                    continue  # Mostly dead link
+
+                preprocessed.append(cont)
+                continue  # Save content and then pass
+
+            cont = cont.replace('’', "'")
+            for p in punc:
+                cont = cont.replace(p, f' {p} ')
+
+            words = cont.split(' ')
+            words = [w.lower() for w in words
+                     if w != '']
+            words = [w for w in words
+                     if w not in to_remove]
+
+            cont = ' '.join(words)
+            cont = cont.replace('<@ ! ', '<@!')
+            preprocessed.append(cont)
+
+        return preprocessed
