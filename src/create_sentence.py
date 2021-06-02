@@ -73,6 +73,9 @@ class CreateSentence:
         for p in punc:
             for i in range(1, self.n + 1):
                 word = ' '.join([p for _ in range(i)])
+                if word not in self.link_words:
+                    continue
+
                 word_link = self.link_words[word]
 
                 p_score = word_link.link[p]
