@@ -38,8 +38,8 @@ class AzuriaBot(Cog):
 
         # Réponse automatique - paramètres
         self.last_send = time.time()
-        self.scale = 30  # 30 min d'attente en moyenne
-        self.next_send = np.random.exponential(self.scale)
+        self.scale = 12  # 12 heures d'attente en moyenne
+        self.delta_min = np.random.exponential(self.scale)
 
     @Cog.listener()
     async def on_ready(self):
@@ -95,10 +95,10 @@ class AzuriaBot(Cog):
             return
 
         delta_time = time.time() - self.last_send
-        if delta_time > self.next_send * 60:
-            await context.channel.send(self.create_sentence.sentence())
-            self.next_send = np.random.exponential(self.scale)
+        if delta_time > self.delta_min * 60 * 60:
+            self.delta_min = np.random.exponential(self.scale)
             self.last_send = time.time()
+            await context.channel.send(self.create_sentence.sentence())
 
 
     @command(name='regalemoi')
