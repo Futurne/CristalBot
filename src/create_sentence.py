@@ -43,6 +43,7 @@ class CreateSentence:
         self.sum_starts = 0 # How much differents starts there are ?
         self.n = n
 
+        content = CreateSentence.preprocess_content(content)
         self._init_probabilities(content)
 
     def _init_probabilities(self, content):
