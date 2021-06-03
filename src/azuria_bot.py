@@ -38,7 +38,7 @@ class AzuriaBot(Cog):
 
         # Réponse automatique - paramètres
         self.last_send = time.time()
-        self.scale = 12  # 12 heures d'attente en moyenne
+        self.scale = 18  # 18 heures d'attente en moyenne
         self.delta_min = np.random.exponential(self.scale)
 
     @Cog.listener()
