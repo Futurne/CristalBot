@@ -16,8 +16,10 @@ from discord import Member
 
 import pandas as pd
 import numpy as np
+from PIL import Image
 
 from src.create_sentence import CreateSentence
+from src.VAE import config, model_name, load_model
 
 
 class AzuriaBot(Cog):
@@ -40,6 +42,9 @@ class AzuriaBot(Cog):
         self.last_send = time.time()
         self.scale = 12  # 12 heures d'attente en moyenne
         self.delta_min = np.random.exponential(self.scale)
+
+        # Chargement du modèle PyTorch
+        self.vae = load_model(config, model_name)
 
     @Cog.listener()
     async def on_ready(self):
@@ -154,3 +159,18 @@ class AzuriaBot(Cog):
             list_users += f' - {u}\t{counts.loc[u, "content"]}\n'
 
         await context.send(list_users)
+
+    @command(name='kawai')
+    async def azurkawai(self, context: Context):
+        """
+        Génère une tête.
+        """
+        image = self.vae.generate(1)[0]
+        image = image.permute(1, 2, 0)  # [width, height, RGB]
+        image = image.numpy()
+        image = np.uint8(image * 255)
+        image = Image.fromarray(image)
+
+        image.save('anime.png')
+
+        await context.send(file=discord.File('anime.png'))
