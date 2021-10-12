@@ -40,8 +40,11 @@ class AzuriaBot(Cog):
 
         # Réponse automatique - paramètres
         self.last_send = time.time()
-        self.scale = 12  # 12 heures d'attente en moyenne
+        self.scale = 18  # 18 heures d'attente en moyenne
         self.delta_min = np.random.exponential(self.scale)
+        self.last_send_azuria = time.time()
+        self.scale_azuria = 2
+        self.delta_min_azuria = np.random.exponential(self.scale_azuria)
 
         # Chargement du modèle PyTorch
         self.vae = load_model(config, model_name)
@@ -90,13 +93,17 @@ class AzuriaBot(Cog):
         Pour savoir si on a le droit de répondre, on utilise
         une variable aléatoire 'next_send', qui suit une loi exponentielle.
 
-        Réponds à chaque fois que c'est AzuriaCristal.
+        Réponds à AzuriaCristal avec une dynamique personnalisée.
         """
         if context.content.startswith('!'):
             return  # Ne fait rien
 
         if context.author.name == 'AzuriaCristal':
-            await context.channel.send(self.create_sentence.sentence())
+            delta_time = time.time() - self.last_send_azuria
+            if delta_time > self.delta_min_azuria * 60 * 60:
+                self.delta_min_azuria = np.random.exponential(self.scale_azuria)
+                self.last_send_azuria = time.time()
+                await context.channel.send(self.create_sentence.sentence())
             return
 
         delta_time = time.time() - self.last_send

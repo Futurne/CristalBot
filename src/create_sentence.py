@@ -152,7 +152,7 @@ class CreateSentence:
                 next_words.append(self.choose_next(p))
 
             next_word = '[END]'
-            for w in next_words:
+            for w in reversed(next_words):
                 if w is not None and w != '[END]':
                     next_word = w
 
