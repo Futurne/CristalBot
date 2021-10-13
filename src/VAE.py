@@ -333,6 +333,7 @@ def load_model(config, path_model='vae.pt'):
         config['res_layers']
     )
     model.load_state_dict(torch.load(path_model, map_location='cpu'))
+    model.eval()
     return model
 
 
