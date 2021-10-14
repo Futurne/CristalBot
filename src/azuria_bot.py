@@ -8,6 +8,7 @@ les phrases dans un fichier csv.
 """
 import os
 import time
+import math
 import typing
 
 import discord
@@ -18,6 +19,8 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 
+import torchvision
+
 from src.create_sentence import CreateSentence
 from src.VAE import config, model_name, load_model
 
@@ -26,7 +29,7 @@ class AzuriaBot(Cog):
     """
     Le meilleur bot fait de cristal et d'azur.
 
-    Version: v1.1
+    Version: v1.2
     """
     def __init__(self, bot: Bot, build_database: bool=False,
             author: str='AzuriaCristal', n: int=3):
@@ -168,11 +171,17 @@ class AzuriaBot(Cog):
         await context.send(list_users)
 
     @command(name='kawai')
-    async def azurkawai(self, context: Context):
+    async def azurkawai(self, context: Context, number: typing.Optional[int]=1):
         """
         Génère une tête.
         """
-        image = self.vae.generate(1)[0]
+        if number > 100 or number < 1:
+            await context.send('Tu forces gros')
+
+        image = self.vae.generate(number)
+        nrow = best_nrow(number)
+
+        image = torchvision.utils.make_grid(image, nrow=nrow)
         image = image.permute(1, 2, 0)  # [width, height, RGB]
         image = image.numpy()
         image = np.uint8(image * 255)
@@ -181,3 +190,9 @@ class AzuriaBot(Cog):
         image.save('anime.png')
 
         await context.send(file=discord.File('anime.png'))
+
+def best_nrow(n):
+    nrow = int(math.sqrt(n))
+    while n % nrow != 0:
+        nrow += 1
+    return nrow
