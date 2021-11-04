@@ -10,8 +10,7 @@ It also uses a Variational AutoEncoder to generate anime faces.
 The Pytorch model isn't in the repo, if you want it you can ping me.
 
 
-To add the bot: [OAuth2 link](https://discord.com/api/oauth2/authorize?client_id=846874522917666816&permissions=0&scope=bot)
-
-Public client id: 846874522917666816
+You can add the bot [here](https://discord.com/api/oauth2/authorize?client_id=846874522917666816&permissions=0&scope=bot)
+*(bot id: 846874522917666816)*.
 
 ## Commands
